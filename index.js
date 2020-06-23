@@ -42,8 +42,10 @@ function renderShoppingList() {
 
 
 function addItemToShoppingList(itemName) {
-  console.log(`Adding "${itemName}" to shopping list`);
-  STORE.push({id: cuid(), name: itemName, checked: false});
+  if (itemName.length > 0) {
+    console.log(`Adding "${itemName}" to shopping list`);
+    STORE.push({id: cuid(), name: itemName, checked: false});
+  }
 }
 
 function handleNewItemSubmit() {
