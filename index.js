@@ -1,44 +1,106 @@
-`use strict`;
+'use strict';
 
-$(function () {
-  
-  $('#js-shopping-list-form').submit(event => {
-    // prevent default form submission
-    event.preventDefault();
-    // grab the list
-    const shoppingListEntry = $('.js-shopping-list-entry').val();
+const STORE = [
+  {id: cuid(), name: "apples", checked: false},
+  {id: cuid(), name: "oranges", checked: false},
+  {id: cuid(), name: "milk", checked: true},
+  {id: cuid(), name: "bread", checked: false}
+];
 
-    // add a new list item
-    // copy and pasted html code for list
-    $('.shopping-list').append(
-      `<li>
-        <span class="shopping-item">${shoppingListEntry}</span>
-        <div class="shopping-item-controls">
-          <button class="shopping-item-toggle">
+
+function generateItemElement(item) {
+  return `
+    <li data-item-id="${item.id}">
+      <span class="shopping-item js-shopping-item ${item.checked ? "shopping-item__checked" : ''}">${item.name}</span>
+      <div class="shopping-item-controls">
+        <button class="shopping-item-toggle js-item-toggle">
             <span class="button-label">check</span>
-          </button>
-          <button class="shopping-item-delete">
+        </button>
+        <button class="shopping-item-delete js-item-delete">
             <span class="button-label">delete</span>
-          </button>
-        </div>
-      </li>`
-    );
-    // let's have the textfield be blank after press add item
-    $('.js-shopping-list-entry').val("");
-  });
+        </button>
+      </div>
+    </li>`;
+}
 
-  // one for button 'check' to make linethrough or not for list item
-  // recall using this with arrow functions is bad
-  $('.shopping-list').on('click', '.shopping-item-toggle', function (event) {
-    // recommended to use closest
-    // wow, had a .shopping-item__checked the whole time, don't need the '.'
-    $(this).closest('li').find('.shopping-item').toggleClass('shopping-item__checked');
-  });
+
+function generateShoppingItemsString(shoppingList) {
+  console.log("Generating shopping list element");
+
+  const items = shoppingList.map((item) => generateItemElement(item));
   
-  // one for deleting a list item
-  // nearly copy and paste of above
-  $('.shopping-list').on('click', '.shopping-item-delete', function (event) {
-    // recommended to use closest: get the first element that matches the selector by testing the element itself and traversing up through its ancestors in the DOM tree.
-    $(this).closest('li').remove();
+  return items.join("");
+}
+
+
+function renderShoppingList() {
+  console.log('`renderShoppingList` ran');
+  const shoppingListItemsString = generateShoppingItemsString(STORE);
+
+  $('.js-shopping-list').html(shoppingListItemsString);
+}
+
+
+function addItemToShoppingList(itemName) {
+  console.log(`Adding "${itemName}" to shopping list`);
+  STORE.push({id: cuid(), name: itemName, checked: false});
+}
+
+function handleNewItemSubmit() {
+  $('#js-shopping-list-form').submit(function(event) {
+    event.preventDefault();
+    console.log('`handleNewItemSubmit` ran');
+    const newItemName = $('.js-shopping-list-entry').val();
+    $('.js-shopping-list-entry').val('');
+    addItemToShoppingList(newItemName);
+    renderShoppingList();
   });
-});
+}
+
+function toggleCheckedForListItem(itemId) {
+  console.log("Toggling checked property for item with id " + itemId);
+  const item = STORE.find(item => item.id === itemId);
+  item.checked = !item.checked;
+}
+
+
+function getItemIdFromElement(item) {
+  return $(item)
+    .closest('li')
+    .data('item-id');
+}
+
+function handleItemCheckClicked() {
+  $('.js-shopping-list').on('click', `.js-item-toggle`, event => {
+    console.log('`handleItemCheckClicked` ran');
+    const id = getItemIdFromElement(event.currentTarget);
+    toggleCheckedForListItem(id);
+    renderShoppingList();
+  });
+}
+
+
+function deleteListItem(itemId) {
+  console.log(`Deleting item with id  ${itemId} from shopping list`)
+
+  const itemIndex = STORE.findIndex(item => item.id === itemId);
+  STORE.splice(itemIndex, 1);
+}
+
+
+function handleDeleteItemClicked() {
+  $('.js-shopping-list').on('click', '.js-item-delete', event => {
+    const itemId = getItemIdFromElement(event.currentTarget);
+    deleteListItem(itemId);
+    renderShoppingList();
+  });
+}
+
+function handleShoppingList() {
+  renderShoppingList();
+  handleNewItemSubmit();
+  handleItemCheckClicked();
+  handleDeleteItemClicked();
+}
+
+$(handleShoppingList);
